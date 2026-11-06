@@ -1,30 +1,37 @@
 # Family Messenger
 
-Private Android messenger for a family of up to five members.
+Private Android family messenger for up to five members.
 
-## Current foundation
-- Kotlin + Jetpack Compose Android application.
-- Supabase project: `tgfhfgvpyituwevjqity` (Paris region).
-- Google OAuth sign-in through Supabase Auth.
-- First registered family account becomes the initial administrator; later accounts remain pending until approved.
-- Family profile records and a private avatar bucket are provisioned by the initial database migration.
+## Backend provisioned
+Supabase project: https://supabase.com/dashboard/project/tgfhfgvpyituwevjqity (Paris, eu-west-3).
 
-## Google sign-in setup required
-Google OAuth cannot be activated without credentials from a Google Cloud project:
-1. Create an OAuth client for Android using the app package `com.family.messenger` and the release/debug signing SHA-1 fingerprints.
-2. Add the client ID to Supabase Dashboard → Authentication → Sign In / Providers → Google.
-3. Enable Google and save the provider configuration.
-4. Add `family://auth-callback` to Supabase Authentication → URL Configuration → Redirect URLs.
+Database foundation currently includes:
+- `family_profiles`: profile, admin/member role and pending/approved/rejected membership status.
+- A database trigger that gives the first registered account admin/approved status and caps family registration at five accounts.
+- `family_messages`: private direct-message records with text/media metadata, reply/forward references, delivery/read timestamps and per-participant deletion flags.
+- `family_devices`: FCM token registration records.
+- `family_calls`: audio/video call history and call status.
+- Private `family-avatars` and `family-media` storage buckets.
+- Row-level security on all exposed application tables and private storage policies.
+
+The Supabase security advisor currently reports no security lints. Performance advisor may report unused indexes while the new tables have no traffic; this is expected until the app uses them.
+
+## Google sign-in owner setup
+Google OAuth cannot be activated until the owner creates credentials in Google Cloud:
+1. Create OAuth credentials for Android package `com.family.messenger` using the final signing SHA-1.
+2. Configure the Google provider in Supabase Authentication → Providers → Google (Web client ID and secret).
+3. Add `family://auth-callback` to Supabase Authentication → URL Configuration → Redirect URLs.
+4. Enable the provider.
 
 Dashboard: https://supabase.com/dashboard/project/tgfhfgvpyituwevjqity
 
-The Android app uses only the Supabase publishable key. Never put a service-role key in the APK.
+Use only the Supabase publishable key in the Android client. Never put a service-role key in the APK.
 
-## Build
-Open in Android Studio and run the app, or use the GitHub Actions workflow. The CI workflow installs Gradle and Android SDK automatically.
+## Android implementation status
+The repository currently contains the initial root Gradle configuration and project notes. The Android application module, screens, OAuth callback implementation, CI workflow, messaging UI, calls, push delivery, profile-photo flow, and production signing are not yet completed or verified. Do not treat this repository as a buildable APK yet.
 
-## Security
-- Maximum five family accounts is enforced by a database trigger, not by client-side checks.
-- New members remain pending until approved by the initial administrator.
-- Profile and avatar access are protected by row-level/storage policies.
-- Do not treat editable user metadata as an authorization source.
+## Security notes
+- Five-member limit is enforced on the server, not by client-side checks.
+- New accounts remain pending until the family administrator approves them.
+- Profile and media data use row-level/storage policies.
+- User-editable metadata is not used as an authorization source.
